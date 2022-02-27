@@ -36,7 +36,12 @@ cache as well, with some standard imgur path to filename mapping.
 	`<script>window.postDataJSON="$JSON_DOC"</script>`
 - Maybe keep track of the imgur data version number and have a parser for each version.
 	`data-release="imgur@2.0.8"`
-
+- bash for extracting the JSON document.
+	curl -s https://imgur.com/gallery/kaOZU \
+		| perl -ne 'm{<script>window.postDataJSON="(.*?)"</script>}xms; print $1' \
+		| sed 's/\\"/"/g; s/\\\\"/\\"/g' \
+		| sed "s/\\\'/'/g" \
+		| jq .
 */
 
 func main() {
