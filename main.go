@@ -32,6 +32,11 @@ JSON looks the best first step towards getting a list of media to download.
 the cached files, so the generated HTML response shows things in order and uses
 the correct descriptions etc. Perhaps store a subset of the imgur JSON in the
 cache as well, with some standard imgur path to filename mapping.
+- I'm going to parse with regex initially and see how far that gets me.
+	`<script>window.postDataJSON="$JSON_DOC"</script>`
+- Maybe keep track of the imgur data version number and have a parser for each version.
+	`data-release="imgur@2.0.8"`
+
 */
 
 func main() {
