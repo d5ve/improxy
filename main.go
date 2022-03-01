@@ -1,6 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"regexp"
+	"strings"
+)
 
 /*
 
@@ -49,4 +56,91 @@ cache as well, with some standard imgur path to filename mapping.
 
 func main() {
 	fmt.Println("improxy")
+}
+
+func ImgurGet(path string) Metadata {
+
+	resp, err := http.Get("https://imgur.com" + path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if strings.HasPrefix(path, "/gallery/") {
+		return GetMetadataFromGalleryPage(body)
+
+	} else if strings.HasPrefix(path, "/a/") {
+		return GetMetadataFromAlbumPage(body)
+
+	} else {
+		return GetMetadataFromPage(body)
+	}
+
+	return Metadata{}
+}
+
+type Media struct {
+	Url         string
+	Title       string
+	Description string
+	FullsizeUrl string
+}
+
+type Metadata struct {
+	Media []Media
+}
+
+func GetMetadataFromPage(body []byte) Metadata {
+	fmt.Println(string(body))
+
+	// Image links in the HTML
+	re := regexp.MustCompile(`https://i.imgur.com/[^"]+`)
+	// Generally two matches, the first being a regular-sized image link,
+	// and the second being to the full size image, but with a ?fb
+	// querystring, so it shows a thumbnail.
+	found := re.FindAll(body, -1)
+	url := string(found[0])
+	fullsizeurl := strings.TrimSuffix(string(found[1]), "?fb")
+
+	re = regexp.MustCompile(`<title>([^<]+)</title>`)
+	titles := re.FindSubmatch(body)
+	title := string(titles[1])
+
+	desc := ""
+
+	image := Media{
+		url,
+		title,
+		desc,
+		fullsizeurl,
+	}
+
+	fmt.Printf("%q\n", image)
+	media := make([]Media, 1)
+	media[0] = image
+	metadata := Metadata{media}
+
+	return metadata
+}
+
+func GetMetadataFromGalleryPage(body []byte) Metadata {
+	// fmt.Println(string(body))
+
+	fmt.Println("TODO: GetMetadataFromGalleryPage")
+
+	return Metadata{}
+}
+
+func GetMetadataFromAlbumPage(body []byte) Metadata {
+	// fmt.Println(string(body))
+
+	fmt.Println("TODO: GetMetadataFromAlbumPage")
+	return Metadata{}
 }
