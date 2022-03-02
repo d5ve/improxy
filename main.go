@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -110,8 +111,8 @@ func GetMetadataFromPage(body []byte) Metadata {
 	fullsizeurl := strings.TrimSuffix(string(found[1]), "?fb")
 
 	re = regexp.MustCompile(`<title>([^<]+)</title>`)
-	titles := re.FindSubmatch(body)
-	title := string(titles[1])
+	matches := re.FindSubmatch(body)
+	title := string(matches[1])
 
 	desc := ""
 
@@ -133,7 +134,22 @@ func GetMetadataFromPage(body []byte) Metadata {
 func GetMetadataFromGalleryPage(body []byte) Metadata {
 	// fmt.Println(string(body))
 
+	// JSON document in the HTML
 	fmt.Println("TODO: GetMetadataFromGalleryPage")
+	re := regexp.MustCompile(`<script>window.postDataJSON="(.*)"</script>`)
+	matches := re.FindSubmatch(body)
+	imgurjson := string(matches[1])
+	// TODO: Unescape the json, then unmarshal into go, then loop through appending Media
+	imgurjson = strings.ReplaceAll(imgurjson, "\\\"", "\"")
+	imgurjson = strings.ReplaceAll(imgurjson, "\\\\\"", "\\\"")
+	imgurjson = strings.ReplaceAll(imgurjson, "\\'", "'")
+	fmt.Println(imgurjson)
+	var output map[string]interface{}
+	err := json.Unmarshal([]byte(imgurjson), &output)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Println("output:", output)
 
 	return Metadata{}
 }
