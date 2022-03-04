@@ -53,6 +53,10 @@ cache as well, with some standard imgur path to filename mapping.
 		| sed 's/\\"/"/g; s/\\\\"/\\"/g' \
 		| sed "s/\\\'/'/g" \
 		| jq .
+- Pattern for extracting the indvidual images from an album blog page:
+	<div style="min-height: 485px" class="post-image">(.*?)</div>
+	<div [^>]*class="post-image"[^>]*>(.*?)</div>
+
 */
 
 func main() {
@@ -61,6 +65,9 @@ func main() {
 
 func ImgurGet(path string) Metadata {
 
+	if strings.HasPrefix(path, "/a/") && !strings.HasSuffix(path, "blog") {
+		path += "/layout/blog"
+	}
 	resp, err := http.Get("https://imgur.com" + path)
 	if err != nil {
 		log.Fatal(err)
@@ -181,6 +188,5 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 func GetMetadataFromAlbumPage(body []byte) Metadata {
 	// fmt.Println(string(body))
 
-	fmt.Println("TODO: GetMetadataFromAlbumPage")
-	return Metadata{}
+	return GetMetadataFromPage(body)
 }
