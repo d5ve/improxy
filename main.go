@@ -91,7 +91,6 @@ type Media struct {
 	Url         string
 	Title       string
 	Description string
-	FullsizeUrl string
 }
 
 type Metadata struct {
@@ -108,7 +107,7 @@ func GetMetadataFromPage(body []byte) Metadata {
 	// querystring, so it shows a thumbnail.
 	found := re.FindAll(body, -1)
 	url := string(found[0])
-	fullsizeurl := strings.TrimSuffix(string(found[1]), "?fb")
+	// fullsizeurl := strings.TrimSuffix(string(found[1]), "?fb")
 
 	re = regexp.MustCompile(`<title>([^<]+)</title>`)
 	matches := re.FindSubmatch(body)
@@ -120,7 +119,6 @@ func GetMetadataFromPage(body []byte) Metadata {
 		url,
 		title,
 		desc,
-		fullsizeurl,
 	}
 
 	// fmt.Printf("%q\n", image)
@@ -150,41 +148,34 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 	}
 	// fmt.Println("postDataJSON:", postDataJSON)
 	media, exists := postDataJSON["media"]
+	images := []Media{}
 	if exists {
 		for _, m := range media.([]interface{}) {
-			// switch c := m.(type) {
-			// default:
-			// 	fmt.Printf("m isa %T\n", c)
-			// 	// walk(m)
-			// }
+			url := ""
+			title := ""
+			desc := ""
 			for k, v := range m.(map[string]interface{}) {
 				if k == "metadata" {
-					fmt.Printf("metadata=%q\n", v)
+					metadata := v.(map[string]interface{})
+					// fmt.Printf("metadata=%q\n", metadata)
+					title = metadata["title"].(string)
+					desc = metadata["description"].(string)
+
 				}
-				// fmt.Printf("k %q = v %q\n", k, v)
+				if k == "url" {
+					url = v.(string)
+				}
 			}
-			// title := m["title"]
+			image := Media{
+				url,
+				title,
+				desc,
+			}
+			images = append(images, image)
 		}
 	}
 
-	return Metadata{}
-}
-
-func walk(v interface{}) {
-	switch v := v.(type) {
-	case []interface{}:
-		for i, v := range v {
-			fmt.Println("index:", i)
-			walk(v)
-		}
-	case map[interface{}]interface{}:
-		for k, v := range v {
-			fmt.Println("key:", k)
-			walk(v)
-		}
-	default:
-		fmt.Println("v:", v)
-	}
+	return Metadata{images}
 }
 
 func GetMetadataFromAlbumPage(body []byte) Metadata {
