@@ -99,7 +99,7 @@ type Metadata struct {
 }
 
 func GetMetadataFromPage(body []byte) Metadata {
-	fmt.Println(string(body))
+	// fmt.Println(string(body))
 
 	// Image links in the HTML
 	re := regexp.MustCompile(`https://i.imgur.com/[^"]+`)
@@ -123,7 +123,7 @@ func GetMetadataFromPage(body []byte) Metadata {
 		fullsizeurl,
 	}
 
-	fmt.Printf("%q\n", image)
+	// fmt.Printf("%q\n", image)
 	media := make([]Media, 1)
 	media[0] = image
 	metadata := Metadata{media}
@@ -135,7 +135,6 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 	// fmt.Println(string(body))
 
 	// JSON document in the HTML
-	fmt.Println("TODO: GetMetadataFromGalleryPage")
 	re := regexp.MustCompile(`<script>window.postDataJSON="(.*)"</script>`)
 	matches := re.FindSubmatch(body)
 	imgurjson := string(matches[1])
@@ -143,15 +142,49 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 	imgurjson = strings.ReplaceAll(imgurjson, "\\\"", "\"")
 	imgurjson = strings.ReplaceAll(imgurjson, "\\\\\"", "\\\"")
 	imgurjson = strings.ReplaceAll(imgurjson, "\\'", "'")
-	fmt.Println(imgurjson)
-	var output map[string]interface{}
-	err := json.Unmarshal([]byte(imgurjson), &output)
+	// fmt.Println(imgurjson)
+	var postDataJSON map[string]interface{}
+	err := json.Unmarshal([]byte(imgurjson), &postDataJSON)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	fmt.Println("output:", output)
+	// fmt.Println("postDataJSON:", postDataJSON)
+	media, exists := postDataJSON["media"]
+	if exists {
+		for _, m := range media.([]interface{}) {
+			// switch c := m.(type) {
+			// default:
+			// 	fmt.Printf("m isa %T\n", c)
+			// 	// walk(m)
+			// }
+			for k, v := range m.(map[string]interface{}) {
+				if k == "metadata" {
+					fmt.Printf("metadata=%q\n", v)
+				}
+				// fmt.Printf("k %q = v %q\n", k, v)
+			}
+			// title := m["title"]
+		}
+	}
 
 	return Metadata{}
+}
+
+func walk(v interface{}) {
+	switch v := v.(type) {
+	case []interface{}:
+		for i, v := range v {
+			fmt.Println("index:", i)
+			walk(v)
+		}
+	case map[interface{}]interface{}:
+		for k, v := range v {
+			fmt.Println("key:", k)
+			walk(v)
+		}
+	default:
+		fmt.Println("v:", v)
+	}
 }
 
 func GetMetadataFromAlbumPage(body []byte) Metadata {
