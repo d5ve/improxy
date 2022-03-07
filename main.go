@@ -53,9 +53,10 @@ cache as well, with some standard imgur path to filename mapping.
 		| sed 's/\\"/"/g; s/\\\\"/\\"/g' \
 		| sed "s/\\\'/'/g" \
 		| jq .
-- Pattern for extracting the indvidual images from an album blog page:
-	<div style="min-height: 485px" class="post-image">(.*?)</div>
-	<div [^>]*class="post-image"[^>]*>(.*?)</div>
+- bash for extracting the indvidual images from an album blog page:
+	curl -s https://imgur.com/a/Bh7Sw/layout/blog \
+		| perl -e '$body = join("",<STDIN>); for ($body =~ m{<div style="min-height: 485px" class="post-image">(.*?)</div>}gms) {print $1}' \
+		| sed 's#  *# #g'
 
 */
 
@@ -188,5 +189,9 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 func GetMetadataFromAlbumPage(body []byte) Metadata {
 	// fmt.Println(string(body))
 
-	return GetMetadataFromPage(body)
+	// re := regexp.MustCompile(`<div [^>]*class="post-image"[^>]*>(.*?)</div>`)
+	re := regexp.MustCompile(`<div style="min-height: 485px" class="post-image">(.*)</div>`)
+	matches := re.FindSubmatch(body)
+	fmt.Printf("%q\n", matches)
+	return Metadata{}
 }
