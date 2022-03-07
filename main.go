@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 /*
@@ -189,9 +191,17 @@ func GetMetadataFromGalleryPage(body []byte) Metadata {
 func GetMetadataFromAlbumPage(body []byte) Metadata {
 	// fmt.Println(string(body))
 
-	// re := regexp.MustCompile(`<div [^>]*class="post-image"[^>]*>(.*?)</div>`)
-	re := regexp.MustCompile(`<div style="min-height: 485px" class="post-image">(.*)</div>`)
-	matches := re.FindSubmatch(body)
-	fmt.Printf("%q\n", matches)
+	// Try a tokeniser
+	z := html.NewTokenizer(strings.NewReader(string(body)))
+done:
+	for {
+		tt := z.Next()
+		fmt.Println(tt)
+		switch {
+		case tt == html.ErrorToken:
+			// End of the document, we're done
+			break done
+		}
+	}
 	return Metadata{}
 }
